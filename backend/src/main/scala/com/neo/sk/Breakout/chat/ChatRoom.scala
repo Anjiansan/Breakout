@@ -1,11 +1,11 @@
-package com.neo.sk.hiStream.chat
+package com.neo.sk.Breakout.chat
 
 import akka.NotUsed
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source}
-import com.neo.sk.hiStream.chat.Protocol.{Msg, MultiTextMsg, TextMsg}
-import com.neo.sk.hiStream.chat.RoomMaster.{JoinRoom, LeftRoom}
+import com.neo.sk.Breakout.chat.Protocol.{Msg, MultiTextMsg, TextMsg}
+import com.neo.sk.Breakout.chat.RoomMaster.{JoinRoom, LeftRoom}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext

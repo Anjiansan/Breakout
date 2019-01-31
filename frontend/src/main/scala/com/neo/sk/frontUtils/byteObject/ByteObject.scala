@@ -2,7 +2,7 @@ package com.neo.sk.frontUtils.byteObject
 
 import com.neo.sk.frontUtils.byteObject.decoder.{BytesDecoder, DecoderFailure}
 import com.neo.sk.frontUtils.byteObject.encoder.BytesEncoder
-import com.neo.sk.hiStream.utils.MiddleBuffer
+import com.neo.sk.Breakout.utils.MiddleBuffer
 
 /**
   * User: Taoz

@@ -1,4 +1,4 @@
-package com.neo.sk.hiStream.http
+package com.neo.sk.Breakout.http
 
 import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem}

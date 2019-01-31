@@ -1,6 +1,6 @@
 package com.neo.sk.frontUtils.byteObject
 
-import com.neo.sk.hiStream.utils.MiddleBuffer
+import com.neo.sk.Breakout.utils.MiddleBuffer
 import shapeless.labelled.FieldType
 import shapeless.{:+:, ::, CNil, Coproduct, HList, HNil, Inl, Inr, LabelledGeneric, Lazy, Witness}
 

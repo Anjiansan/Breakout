@@ -3,15 +3,15 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 
 
 
-name := "hiStream"
+name := "Breakout"
 
 val scalaV = "2.12.6"
 //val scalaV = "2.11.8"
 
-val projectName = "hiStream"
+val projectName = "Breakout"
 val projectVersion = "1.2.1"
 
-val projectMainClass = "com.neo.sk.hiStream.Boot"
+val projectMainClass = "com.neo.sk.Breakout.Boot"
 
 def commonSettings = Seq(
   version := projectVersion,
@@ -78,15 +78,15 @@ lazy val backend = (project in file("backend")).enablePlugins(PackPlugin)
     mainClass in reStart := Some(projectMainClass),
     javaOptions in reStart += "-Xmx2g"
   )
-  .settings(name := "hiStream")
+  .settings(name := "Breakout")
   .settings(
     //pack
     // If you need to specify main classes manually, use packSettings and packMain
     //packSettings,
     // [Optional] Creating `hello` command that calls org.mydomain.Hello#main(Array[String])
-    packMain := Map("hiStream" -> projectMainClass),
-    packJvmOpts := Map("hiStream" -> Seq("-Xmx256m", "-Xms64m")),
-    packExtraClasspath := Map("hiStream" -> Seq("."))
+    packMain := Map("Breakout" -> projectMainClass),
+    packJvmOpts := Map("Breakout" -> Seq("-Xmx256m", "-Xms64m")),
+    packExtraClasspath := Map("Breakout" -> Seq("."))
   )
   .settings(
     libraryDependencies ++= Dependencies.backendDependencies

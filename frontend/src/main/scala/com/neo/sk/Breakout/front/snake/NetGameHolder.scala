@@ -1,7 +1,7 @@
-package com.neo.sk.hiStream.front.snake
+package com.neo.sk.Breakout.front.snake
 
-import com.neo.sk.hiStream.snake.Protocol.GridDataSync
-import com.neo.sk.hiStream.snake._
+import com.neo.sk.Breakout.snake.Protocol.GridDataSync
+import com.neo.sk.Breakout.snake._
 import org.scalajs.dom
 import org.scalajs.dom.ext.{Color, KeyCode}
 import org.scalajs.dom.html.{Document => _, _}

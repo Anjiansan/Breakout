@@ -1,6 +1,6 @@
 package com.neo.sk.utils.byteObject
 
-import com.neo.sk.hiStream.utils.MiddleBuffer
+import com.neo.sk.Breakout.utils.MiddleBuffer
 import com.neo.sk.utils.byteObject.decoder.{BytesDecoder, DecoderFailure}
 import com.neo.sk.utils.byteObject.encoder.BytesEncoder
 

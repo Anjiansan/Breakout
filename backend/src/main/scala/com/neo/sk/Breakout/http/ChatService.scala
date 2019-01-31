@@ -1,4 +1,4 @@
-package com.neo.sk.hiStream.http
+package com.neo.sk.Breakout.http
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -10,8 +10,8 @@ import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.stream.{ActorAttributes, Materializer, Supervision}
 import akka.util.{ByteString, Timeout}
-import com.neo.sk.hiStream.chat.ChatRoom
-import com.neo.sk.hiStream.chat.Protocol.{Msg, TestMessage, TextMsg}
+import com.neo.sk.Breakout.chat.ChatRoom
+import com.neo.sk.Breakout.chat.Protocol.{Msg, TestMessage, TextMsg}
 import com.neo.sk.utils.MiddleBufferInJvm
 import org.slf4j.LoggerFactory
 

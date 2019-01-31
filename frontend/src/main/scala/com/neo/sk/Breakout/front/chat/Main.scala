@@ -1,8 +1,8 @@
-package com.neo.sk.hiStream.front.chat
+package com.neo.sk.Breakout.front.chat
 
 import com.neo.sk.frontUtils.byteObject.decoder
 import com.neo.sk.frontUtils.{Component, MiddleBufferInJs}
-import com.neo.sk.hiStream.chat.Protocol.{Msg, MultiTextMsg, TextMsg}
+import com.neo.sk.Breakout.chat.Protocol.{Msg, MultiTextMsg, TextMsg}
 import mhtml._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode

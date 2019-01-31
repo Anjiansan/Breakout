@@ -1,6 +1,6 @@
-package com.neo.sk.hiStream.front.snake
+package com.neo.sk.Breakout.front.snake
 
-import com.neo.sk.hiStream.snake.{Grid, Point}
+import com.neo.sk.Breakout.snake.{Grid, Point}
 
 /**
   * User: Taoz

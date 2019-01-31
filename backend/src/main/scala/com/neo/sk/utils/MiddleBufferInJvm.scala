@@ -2,7 +2,7 @@ package com.neo.sk.utils
 
 import java.nio.ByteBuffer
 
-import com.neo.sk.hiStream.utils.MiddleBuffer
+import com.neo.sk.Breakout.utils.MiddleBuffer
 
 /**
   * User: Taoz
