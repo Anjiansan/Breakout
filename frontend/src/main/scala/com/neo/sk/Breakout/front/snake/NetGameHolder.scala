@@ -156,7 +156,10 @@ object NetGameHolder {
           ctx.drawImage(paddle, breakout.paddle.x + breakout.paddle.speed * offsetTime / Protocol.frameRate, breakout.paddle.y, PaddleSize.w, PaddleSize.h)
           if(!grid.checkRush(myId, offsetTime)) {
             ctx.drawImage(ball, breakout.ball.x - breakout.ball.speedX * offsetTime / Protocol.frameRate, breakout.ball.y - breakout.ball.speedY * offsetTime / Protocol.frameRate, BallSize.w, BallSize.h)
-            println(offsetTime + " " + lastBX + " " + lastBY + " "  + (breakout.ball.speedX * offsetTime / Protocol.frameRate) + " " + (breakout.ball.speedY * offsetTime / Protocol.frameRate))
+//            println(offsetTime + " " + lastBX + " " + lastBY + " "  + (breakout.ball.speedX * offsetTime / Protocol.frameRate) + " " + (breakout.ball.speedY * offsetTime / Protocol.frameRate))
+            lastBX = breakout.ball.x - breakout.ball.speedX * offsetTime / Protocol.frameRate
+            lastBY = breakout.ball.y - breakout.ball.speedY * offsetTime / Protocol.frameRate
+            println(lastBX)
           }
           else {
             ctx.drawImage(ball, lastBX, lastBY, BallSize.w, BallSize.h)
@@ -166,8 +169,6 @@ object NetGameHolder {
           ctx.drawImage(paddle, breakout.paddle.x, breakout.paddle.y, PaddleSize.w, PaddleSize.h)
           ctx.drawImage(ball, breakout.ball.x, breakout.ball.y, BallSize.w, BallSize.h)
         }
-        lastBX = breakout.ball.x - breakout.ball.speedX * offsetTime / Protocol.frameRate
-        lastBY = breakout.ball.y - breakout.ball.speedY * offsetTime / Protocol.frameRate
 
 
         breakout.blocks.foreach {

@@ -238,8 +238,8 @@ trait Grid {
   def checkRush(id: Long, offsetTime: Double): Boolean = {
     if(breakouts.exists(_._1 == id)) {
       val breakout = breakouts.find(_._1 == id).get._2
-      val p = breakout.paddle
-      val b = breakout.ball
+      val p = breakout.paddle.copy()
+      val b = breakout.ball.copy()
       b.x = b.x - b.speedX * offsetTime / Protocol.frameRate
       b.y = b.y - b.speedY * offsetTime / Protocol.frameRate
       // 小球碰撞挡板检测
@@ -249,7 +249,7 @@ trait Grid {
       // 小球碰撞砖块检测
       breakout.blocks.foreach {
         item =>
-          if (item.collide(b)) { // 小球、砖块已碰撞
+          if (item.collide(b, true)) { // 小球、砖块已碰撞
             return true
           }
       }

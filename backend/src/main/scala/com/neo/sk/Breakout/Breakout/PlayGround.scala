@@ -69,7 +69,7 @@ object PlayGround {
           if (keyCode == KeyEvent.VK_SPACE) {
             skDt.ball.fired = true
             skDt.ball.speedX = 2
-            skDt.ball.speedY = 30
+            skDt.ball.speedY = 15
             dispatch(grid.getGridData)
             dispatchTo(id, Play(id))
           } else if(skDt.ball.fired) {

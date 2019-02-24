@@ -113,11 +113,12 @@ package object Breakout {
     }
 
     // 小球、砖块碰撞检测
-    def collide(ball: Ball): Boolean = {
+    def collide(ball: Ball, onlyCheck: Boolean = false): Boolean = {
       var b = ball
       if (Math.abs((b.x + BallSize.w/2) - (this.x + BlockSize.w/2)) < (BallSize.w + BlockSize.w)/2 &&
         Math.abs((b.y + BallSize.h/2) - (this.y + BlockSize.h/2)) < (BallSize.h + BlockSize.h)/2) {
-        this.kill()
+        if(!onlyCheck)
+          this.kill()
         return true
       } else {
         return false
