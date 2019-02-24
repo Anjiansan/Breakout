@@ -1,6 +1,6 @@
 package com.neo.sk.Breakout.front.snake
 
-import com.neo.sk.Breakout.snake.{Grid, Point}
+import com.neo.sk.Breakout.Breakout.{Grid, Point}
 
 /**
   * User: Taoz
@@ -13,5 +13,4 @@ class GridOnClient(override val boundary: Point) extends Grid {
 
   override def info(msg: String): Unit = println(msg)
 
-  override def feedApple(appleCount: Int): Unit = {} //do nothing.
 }

@@ -1,10 +1,11 @@
-package com.neo.sk.Breakout.snake
+package com.neo.sk.Breakout.Breakout
 
 import java.awt.event.KeyEvent
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props, Terminated}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source}
+import com.neo.sk.Breakout.Breakout.Protocol.Play
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext
@@ -51,50 +52,51 @@ object PlayGround {
           userMap += (id -> name)
           context.watch(subscriber)
           subscribers += (id -> subscriber)
-          grid.addSnake(id, name)
+          grid.addBreakout(id, name)
           dispatchTo(id, Protocol.Id(id))
-          dispatch(Protocol.NewSnakeJoined(id, name))
           dispatch(grid.getGridData)
+
         case r@Left(id, name) =>
           log.info(s"got $r")
           subscribers.get(id).foreach(context.unwatch)
           subscribers -= id
-          grid.removeSnake(id)
-          dispatch(Protocol.SnakeLeft(id, name))
-        case r@Key(id, keyCode) =>
+          grid.removeBreakout(id)
+          dispatch(Protocol.BreakoutLeft(id, name))
+
+        case r@Key(id, keyCode, frame) =>
           log.debug(s"got $r")
-          dispatch(Protocol.TextMsg(s"Aha! $id click [$keyCode]")) //just for test
+          val skDt = grid.breakouts.filter(_._1 == id).head._2
           if (keyCode == KeyEvent.VK_SPACE) {
-            grid.addSnake(id, userMap.getOrElse(id, "Unknown"))
-          } else {
-            grid.addAction(id, keyCode)
-            dispatch(Protocol.SnakeAction(id, keyCode, grid.frameCount))
+            skDt.ball.fired = true
+            skDt.ball.speedX = 2
+            skDt.ball.speedY = 30
+            dispatch(grid.getGridData)
+            dispatchTo(id, Play(id))
+          } else if(skDt.ball.fired) {
+            grid.addActionWithFrame(id, keyCode, frame)
+            dispatch(Protocol.BreakoutAction(id, keyCode, frame))
           }
+
         case r@Terminated(actor) =>
           log.warn(s"got $r")
           subscribers.find(_._2.equals(actor)).foreach { case (id, _) =>
             log.debug(s"got Terminated id = $id")
             subscribers -= id
-            grid.removeSnake(id).foreach(s => dispatch(Protocol.SnakeLeft(id, s.name)))
+            grid.removeBreakout(id).foreach(s => dispatch(Protocol.BreakoutLeft(id, s.name)))
           }
+
         case Sync =>
           tickCount += 1
           grid.update()
-          val feedApples = grid.getFeededApple
           if (tickCount % 20 == 5) {
             val gridData = grid.getGridData
             dispatch(gridData)
-          } else {
-            if (feedApples.nonEmpty) {
-              dispatch(Protocol.FeedApples(feedApples))
-            }
           }
-          if (tickCount % 20 == 1) {
-            dispatch(Protocol.Ranks(grid.currentRank, grid.historyRankList))
-          }
+
         case NetTest(id, createTime) =>
           log.info(s"Net Test: createTime=$createTime")
           dispatchTo(id, Protocol.NetDelayTest(createTime))
+
         case x =>
           log.warn(s"got unknown msg: $x")
       }
@@ -127,7 +129,7 @@ object PlayGround {
                 val timestamp = s.substring(1).toLong
                 NetTest(id, timestamp)
               } else {
-                Key(id, s.toInt)
+                Key(id, s.split("#").head.toInt, s.split("#").last.toLong)
               }
             }
             .to(playInSink(id, name))
@@ -151,7 +153,7 @@ object PlayGround {
 
   private case class Left(id: Long, name: String) extends UserAction
 
-  private case class Key(id: Long, keyCode: Int) extends UserAction
+  private case class Key(id: Long, keyCode: Int, frame: Long) extends UserAction
 
   private case class NetTest(id: Long, createTime: Long) extends UserAction
 

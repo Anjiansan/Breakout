@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>justTest</title>
+  <title>Breakout</title>
 </head>
 <body>
 
@@ -16,12 +16,16 @@
   </form>
 
   <br>
-  <canvas id="GameView" tabindex="1"></canvas>
 
+  <canvas id="backCanvas" tabindex="1" style="display: none;"></canvas>
 
-  <div id="playground"></div>
+  <canvas id="GameView" tabindex="2" style="display: block;margin: 20px auto;border: 1px solid black;background: #d2b3b3;"></canvas>
 
-  <script type="text/javascript" src="/hiStream/static/sjsout/frontend-fastopt.js"></script>
+  <div style="font-size: 20px;text-align: center;">使用左右方向键，进行移动；空格键发射小球并开始游戏，游戏结束时按空格键重置游戏；P 键暂停游戏；通关游戏后，按 N 键可进入下一关卡</div>
+
+  <!--<div id="playground"></div>-->
+
+  <script type="text/javascript" src="/breakout/static/sjsout/frontend-fastopt.js"></script>
   <!--<script type="text/javascript" src="/hiStream/frontend-launcher.js"></script>-->
 
   <script>snake.NetGameHolder.run()</script>

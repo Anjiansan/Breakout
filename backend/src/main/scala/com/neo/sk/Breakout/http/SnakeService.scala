@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.stream.scaladsl.Flow
 import akka.stream.{ActorAttributes, Materializer, Supervision}
 import akka.util.Timeout
-import com.neo.sk.Breakout.snake.PlayGround
+import com.neo.sk.Breakout.Breakout.PlayGround
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContextExecutor
@@ -36,7 +36,7 @@ trait SnakeService {
 
   private val idGenerator = new AtomicInteger(1000000)
 
-  private[this] val log = LoggerFactory.getLogger("com.neo.sk.hiStream.http.SnakeService")
+  private[this] val log = LoggerFactory.getLogger(this.getClass)
 
 
   val netSnakeRoute = {

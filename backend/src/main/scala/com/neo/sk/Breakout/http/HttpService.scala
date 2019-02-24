@@ -36,7 +36,7 @@ trait HttpService extends SnakeService with ChatService with ResourceService{
 
 
   val routes: Route =
-    pathPrefix("hiStream") {
+    pathPrefix("breakout") {
       snakeRoute ~
       netSnakeRoute ~
       chatRoute ~

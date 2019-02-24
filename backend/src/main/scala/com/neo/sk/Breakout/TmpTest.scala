@@ -1,6 +1,6 @@
 package com.neo.sk.Breakout
 
-import com.neo.sk.Breakout.snake.Protocol
+import com.neo.sk.Breakout.Breakout.Protocol
 
 /**
   * User: Taoz

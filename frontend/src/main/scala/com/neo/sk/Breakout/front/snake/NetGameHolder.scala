@@ -1,11 +1,14 @@
 package com.neo.sk.Breakout.front.snake
 
-import com.neo.sk.Breakout.snake.Protocol.GridDataSync
-import com.neo.sk.Breakout.snake._
+import java.awt.event.KeyEvent
+
+import com.neo.sk.Breakout.Breakout.Protocol.GridDataSync
+import com.neo.sk.Breakout.Breakout._
 import org.scalajs.dom
 import org.scalajs.dom.ext.{Color, KeyCode}
 import org.scalajs.dom.html.{Document => _, _}
 import org.scalajs.dom.raw._
+import scalatags.JsDom.short._
 
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
@@ -19,12 +22,11 @@ object NetGameHolder {
 
 
   val bounds = Point(Boundary.w, Boundary.h)
-  val canvasUnit = 10
+  val canvasUnit = 1
   val canvasBoundary = bounds * canvasUnit
   val textLineHeight = 14
 
   var currentRank = List.empty[Score]
-  var historyRank = List.empty[Score]
   var myId = -1l
 
   val grid = new GridOnClient(bounds)
@@ -32,13 +34,15 @@ object NetGameHolder {
   var firstCome = true
   var wsSetup = false
   var justSynced = false
+  var isPlay = false
+
+  var lastBX = 0D
+  var lastBY = 0D
 
   val watchKeys = Set(
     KeyCode.Space,
     KeyCode.Left,
-    KeyCode.Up,
     KeyCode.Right,
-    KeyCode.Down,
     KeyCode.F2
   )
 
@@ -53,15 +57,28 @@ object NetGameHolder {
   private[this] lazy val joinButton = dom.document.getElementById("join").asInstanceOf[HTMLButtonElement]
   private[this] lazy val canvas = dom.document.getElementById("GameView").asInstanceOf[Canvas]
   private[this] lazy val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+  private[this] val offCanvas = dom.document.getElementById("backCanvas").asInstanceOf[Canvas]
+  private[this] val offCtx = offCanvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+
+  val background = img(*.src := s"/breakout/static/img/background.jpg").render
+  val ball = img(*.src := s"/breakout/static/img/ball.png").render
+  val blockL = img(*.src := s"/breakout/static/img/block001.png").render
+  val blockH = img(*.src := s"/breakout/static/img/block002.png").render
+  val paddle = img(*.src := s"/breakout/static/img/paddle.png").render
+
+  var nextFrame = 0//requestAnimationFrame
+  private var logicFrameTime = System.currentTimeMillis()
 
   @JSExport
   def run(): Unit = {
-    drawGameOff()
-    canvas.width = canvasBoundary.x
-    canvas.height = canvasBoundary.y
+    canvas.width = canvasBoundary.x.toInt
+    canvas.height = canvasBoundary.y.toInt
+    drawGameOn()
 
     joinButton.onclick = { (event: MouseEvent) =>
       joinGame(nameField.value)
+      logicFrameTime = System.currentTimeMillis()
+      nextFrame = dom.window.requestAnimationFrame(gameRender())
       event.preventDefault()
     }
     nameField.focus()
@@ -75,19 +92,29 @@ object NetGameHolder {
     dom.window.setInterval(() => gameLoop(), Protocol.frameRate)
   }
 
+  def gameRender():Double => Unit = {
+    d =>
+      val cur = System.currentTimeMillis()
+      val offsetTime = cur - logicFrameTime
+//      grid.checkRush(myId)
+      draw(offsetTime)
+      nextFrame = dom.window.requestAnimationFrame(gameRender())
+  }
+
   def drawGameOn(): Unit = {
+//    ctx.fillStyle = Color.Black.toString()
+//    ctx.fillRect(0, 0, canvas.width, canvas.height)
     ctx.fillStyle = Color.Black.toString()
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.font = "36px Helvetica"
+    ctx.fillText("Welcome.", 150, 180)
+//    offCtx.drawImage(background,0,0,Boundary.w.toInt,bounds.y.toInt)
   }
 
   def drawGameOff(): Unit = {
-    ctx.fillStyle = Color.Black.toString()
-    ctx.fillRect(0, 0, bounds.x * canvasUnit, bounds.y * canvasUnit)
-    ctx.fillStyle = "rgb(250, 250, 250)"
-    if (firstCome) {
-      ctx.font = "36px Helvetica"
-      ctx.fillText("Welcome.", 150, 180)
-    } else {
+    if (!firstCome) {
+      ctx.fillStyle = Color.Black.toString()
+      ctx.fillRect(0, 0, bounds.x * canvasUnit, bounds.y * canvasUnit)
+      ctx.fillStyle = "rgb(250, 250, 250)"
       ctx.font = "36px Helvetica"
       ctx.fillText("Ops, connection lost.", 150, 180)
     }
@@ -96,143 +123,83 @@ object NetGameHolder {
 
   def gameLoop(): Unit = {
     if (wsSetup) {
+      logicFrameTime = System.currentTimeMillis()
       if (!justSynced) {
         update()
       } else {
         justSynced = false
       }
     }
-    draw()
   }
 
   def update(): Unit = {
     grid.update()
   }
 
-  def draw(): Unit = {
+  def draw(offsetTime: Double): Unit = {
     if (wsSetup) {
       val data = grid.getGridData
-      drawGrid(myId, data)
+      drawGrid(myId, data, offsetTime)
     } else {
       drawGameOff()
     }
   }
 
-  def drawGrid(uid: Long, data: GridDataSync): Unit = {
+  def drawGrid(uid: Long, data: GridDataSync, offsetTime: Double): Unit = {
 
-    ctx.fillStyle = Color.Black.toString()
-    ctx.fillRect(0, 0, bounds.x * canvasUnit, bounds.y * canvasUnit)
+    ctx.clearRect(0, 0, bounds.x * canvasUnit, bounds.y * canvasUnit)
+    ctx.drawImage(background, 0, 0, Boundary.w.toInt,bounds.y.toInt)
 
-    val snakes = data.snakes
-    val bodies = data.bodyDetails
-    val apples = data.appleDetails
-
-    ctx.fillStyle = MyColors.otherBody
-    bodies.foreach { case Bd(id, life, x, y) =>
-      //println(s"draw body at $p body[$life]")
-      if (id == uid) {
-        ctx.save()
-        ctx.fillStyle = MyColors.myBody
-        ctx.fillRect(x * canvasUnit + 1, y * canvasUnit + 1, canvasUnit - 1, canvasUnit - 1)
-        ctx.restore()
-      } else {
-        ctx.fillRect(x * canvasUnit + 1, y * canvasUnit + 1, canvasUnit - 1, canvasUnit - 1)
-      }
-    }
-
-    apples.foreach { case Ap(score, life, x, y) =>
-      ctx.fillStyle = score match {
-        case 10 => Color.Yellow.toString()
-        case 5 => Color.Blue.toString()
-        case _ => Color.Red.toString()
-      }
-      ctx.fillRect(x * canvasUnit + 1, y * canvasUnit + 1, canvasUnit - 1, canvasUnit - 1)
-    }
-
-    ctx.fillStyle = MyColors.otherHeader
-    snakes.foreach { snake =>
-      val id = snake.id
-      val x = snake.header.x
-      val y = snake.header.y
-      if (id == uid) {
-        ctx.save()
-        ctx.fillStyle = MyColors.myHeader
-        ctx.fillRect(x * canvasUnit + 2, y * canvasUnit + 2, canvasUnit - 4, canvasUnit - 4)
-        ctx.restore()
-      } else {
-        ctx.fillRect(x * canvasUnit + 2, y * canvasUnit + 2, canvasUnit - 4, canvasUnit - 4)
-      }
-    }
-
-
-    ctx.fillStyle = "rgb(250, 250, 250)"
-    ctx.textAlign = "left"
-    ctx.textBaseline = "top"
-
-    val leftBegin = 10
-    val rightBegin = canvasBoundary.x - 150
-
-    snakes.find(_.id == uid) match {
-      case Some(mySnake) =>
-        firstCome = false
-        val baseLine = 1
-        ctx.font = "12px Helvetica"
-        drawTextLine(s"YOU: id=[${mySnake.id}]    name=[${mySnake.name.take(32)}]", leftBegin, 0, baseLine)
-        drawTextLine(s"your kill = ${mySnake.kill}", leftBegin, 1, baseLine)
-        drawTextLine(s"your length = ${mySnake.length} ", leftBegin, 2, baseLine)
-      case None =>
-        if (firstCome) {
-          ctx.font = "36px Helvetica"
-          ctx.fillText("Please wait.", 150, 180)
-        } else {
-          ctx.font = "36px Helvetica"
-          ctx.fillText("Ops, Press Space Key To Restart!", 150, 180)
+    data.breakouts.find(_.id == myId) match {
+      case Some(breakout) =>
+        if(isPlay) {
+          ctx.drawImage(paddle, breakout.paddle.x + breakout.paddle.speed * offsetTime / Protocol.frameRate, breakout.paddle.y, PaddleSize.w, PaddleSize.h)
+          if(!grid.checkRush(myId, offsetTime)) {
+            ctx.drawImage(ball, breakout.ball.x - breakout.ball.speedX * offsetTime / Protocol.frameRate, breakout.ball.y - breakout.ball.speedY * offsetTime / Protocol.frameRate, BallSize.w, BallSize.h)
+            println(offsetTime + " " + lastBX + " " + lastBY + " "  + (breakout.ball.speedX * offsetTime / Protocol.frameRate) + " " + (breakout.ball.speedY * offsetTime / Protocol.frameRate))
+          }
+          else {
+            ctx.drawImage(ball, lastBX, lastBY, BallSize.w, BallSize.h)
+          }
         }
-    }
+        else {
+          ctx.drawImage(paddle, breakout.paddle.x, breakout.paddle.y, PaddleSize.w, PaddleSize.h)
+          ctx.drawImage(ball, breakout.ball.x, breakout.ball.y, BallSize.w, BallSize.h)
+        }
+        lastBX = breakout.ball.x - breakout.ball.speedX * offsetTime / Protocol.frameRate
+        lastBY = breakout.ball.y - breakout.ball.speedY * offsetTime / Protocol.frameRate
 
-    ctx.font = "12px Helvetica"
-    val currentRankBaseLine = 5
-    var index = 0
-    drawTextLine(s" --- Current Rank --- ", leftBegin, index, currentRankBaseLine)
-    currentRank.foreach { score =>
-      index += 1
-      drawTextLine(s"[$index]: ${score.n.+("   ").take(3)} kill=${score.k} len=${score.l}", leftBegin, index, currentRankBaseLine)
-    }
 
-    val historyRankBaseLine = 1
-    index = 0
-    drawTextLine(s" --- History Rank --- ", rightBegin, index, historyRankBaseLine)
-    historyRank.foreach { score =>
-      index += 1
-      drawTextLine(s"[$index]: ${score.n.+("   ").take(3)} kill=${score.k} len=${score.l}", rightBegin, index, historyRankBaseLine)
+        breakout.blocks.foreach {
+          b =>
+            if(b.alive)
+              ctx.drawImage(if(b.life == 2) blockH else blockL, b.x, b.y, BlockSize.w, BlockSize.h)
+        }
+        ctx.fillStyle = Color.White.toString()
+        ctx.font = "24px Microsoft YaHei"
+        ctx.fillText(s"分数: ${breakout.score.allScore}", 10, 30)
+        ctx.fillText(s"关卡: ${breakout.score.lv}", bounds.x - 100, 30)
+
+      case None =>
+        drawGameOff()
     }
 
   }
-
-  def drawTextLine(str: String, x: Int, lineNum: Int, lineBegin: Int = 0) = {
-    ctx.fillText(str, x, (lineNum + lineBegin - 1) * textLineHeight)
-  }
-
 
   def joinGame(name: String): Unit = {
     joinButton.disabled = true
-    val playground = dom.document.getElementById("playground")
-    playground.innerHTML = s"Trying to join game as '$name'..."
     val gameStream = new WebSocket(getWebSocketUri(dom.document, name))
     gameStream.onopen = { (event0: Event) =>
       drawGameOn()
-      playground.insertBefore(p("Game connection was successful!"), playground.firstChild)
       wsSetup = true
       canvas.focus()
       canvas.onkeydown = {
         (e: dom.KeyboardEvent) => {
-          println(s"keydown: ${e.keyCode}")
           if (watchKeys.contains(e.keyCode)) {
-            println(s"key down: [${e.keyCode}]")
             if (e.keyCode == KeyCode.F2) {
               gameStream.send("T" + System.currentTimeMillis())
             } else {
-              gameStream.send(e.keyCode.toString)
+              gameStream.send(s"${e.keyCode.toString}#${grid.frameCount + 1}")
             }
             e.preventDefault()
           }
@@ -243,7 +210,6 @@ object NetGameHolder {
 
     gameStream.onerror = { (event: Event) =>
       drawGameOff()
-      playground.insertBefore(p(s"Failed: code: ${event.`type`}"), playground.firstChild)
       joinButton.disabled = false
       wsSetup = false
       nameField.focus()
@@ -255,38 +221,26 @@ object NetGameHolder {
     import io.circe.parser._
 
     gameStream.onmessage = { (event: MessageEvent) =>
-      //val wsMsg = read[Protocol.GameMessage](event.data.toString)
       val wsMsg = decode[Protocol.GameMessage](event.data.toString).right.get
       wsMsg match {
         case Protocol.Id(id) => myId = id
         case Protocol.TextMsg(message) => writeToArea(s"MESSAGE: $message")
-        case Protocol.NewSnakeJoined(id, user) => writeToArea(s"$user joined!")
-        case Protocol.SnakeLeft(id, user) => writeToArea(s"$user left!")
-        case a@Protocol.SnakeAction(id, keyCode, frame) =>
-          if (frame > grid.frameCount) {
-            //writeToArea(s"!!! got snake action=$a whem i am in frame=${grid.frameCount}")
-          } else {
-            //writeToArea(s"got snake action=$a")
+        case Protocol.BreakoutLeft(id, user) => writeToArea(s"$user left!")
+        case Protocol.Play(id) =>
+          if(id == myId)
+          {
+            isPlay = true
+            logicFrameTime = System.currentTimeMillis()
           }
+
+        case a@Protocol.BreakoutAction(id, keyCode, frame) =>
           grid.addActionWithFrame(id, keyCode, frame)
 
-        case Protocol.Ranks(current, history) =>
-          //writeToArea(s"rank update. current = $current") //for debug.
-          currentRank = current
-          historyRank = history
-        case Protocol.FeedApples(apples) =>
-          writeToArea(s"apple feeded = $apples") //for debug.
-          grid.grid ++= apples.map(a => Point(a.x, a.y) -> Apple(a.score, a.life))
         case data: Protocol.GridDataSync =>
-          //writeToArea(s"grid data got: $msgData")
-          //TODO here should be better code.
           grid.actionMap = grid.actionMap.filterKeys(_ > data.frameCount)
           grid.frameCount = data.frameCount
-          grid.snakes = data.snakes.map(s => s.id -> s).toMap
-          val appleMap = data.appleDetails.map(a => Point(a.x, a.y) -> Apple(a.score, a.life)).toMap
-          val bodyMap = data.bodyDetails.map(b => Point(b.x, b.y) -> Body(b.id, b.life)).toMap
-          val gridMap = appleMap ++ bodyMap
-          grid.grid = gridMap
+          grid.breakouts.empty
+          grid.breakouts ++= data.breakouts.map(s => s.id -> s)
           justSynced = true
         //drawGrid(msgData.uid, data)
         case Protocol.NetDelayTest(createTime) =>
@@ -299,25 +253,20 @@ object NetGameHolder {
 
     gameStream.onclose = { (event: Event) =>
       drawGameOff()
-      playground.insertBefore(p("Connection to game lost. You can try to rejoin manually."), playground.firstChild)
       joinButton.disabled = false
       wsSetup = false
       nameField.focus()
     }
 
-    def writeToArea(text: String): Unit =
-      playground.insertBefore(p(text), playground.firstChild)
+    def writeToArea(text: String): Unit = {
+//      playground.insertBefore(p(text), playground.firstChild)
+      println(text)
+    }
   }
 
   def getWebSocketUri(document: Document, nameOfChatParticipant: String): String = {
     val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
-    s"$wsProtocol://${dom.document.location.host}/hiStream/netSnake/join?name=$nameOfChatParticipant"
-  }
-
-  def p(msg: String) = {
-    val paragraph = dom.document.createElement("p")
-    paragraph.innerHTML = msg
-    paragraph
+    s"$wsProtocol://${dom.document.location.host}/breakout/netSnake/join?name=$nameOfChatParticipant"
   }
 
 

@@ -37,7 +37,7 @@ trait ChatService {
 
   private val idGenerator = new AtomicInteger(1000000)
 
-  private[this] val log = LoggerFactory.getLogger("com.neo.sk.hiStream.http.SnakeService")
+  private[this] val log = LoggerFactory.getLogger(this.getClass)
 
 
   val chatRoute: Route = {
