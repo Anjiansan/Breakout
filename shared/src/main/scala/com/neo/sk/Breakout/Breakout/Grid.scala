@@ -26,6 +26,7 @@ trait Grid {
   var breakouts = scala.collection.mutable.Map.empty[Long, SkDt]
   var actionMap = Map.empty[Long, Map[Long, Int]]
 
+  var winner = -1l
 
   def removeBreakout(id: Long): Option[SkDt] = {
     val r = breakouts.get(id)
@@ -47,18 +48,18 @@ trait Grid {
   }
 
 
-  def update() = {
+  def update(isFront: Boolean = false) = {
     //println(s"-------- grid update frameCount= $frameCount ---------")
     breakouts.foreach(_._2.paddle.speed = 0)
-    updateBreakouts()
+    updateBreakouts(isFront)
     actionMap -= frameCount
     frameCount += 1
   }
 
-  def initScene(id: Long, name: String) = {
+  def initScene(id: Long, name: String, lv: Int = Level.DEFAULT) = {
     val paddle = Paddle(449, 450)
     val ball = Ball(491, 432)
-    val data = initBlock()
+    val data = initBlock(lv)
     SkDt(id, name, paddle, ball, data._1, Score(data._2))
   }
 
@@ -143,7 +144,7 @@ trait Grid {
           allValue += 1
         }
         else {
-          blocks.append(Block(item._1, item._2, 2))
+          blocks.append(Block(item._1, item._2, 1))
           allValue += 2
         }
     }
@@ -151,8 +152,8 @@ trait Grid {
   }
 
 
-  private[this] def updateBreakouts() = {
-    def updateABreakout(breakout: SkDt, actMap: Map[Long, Int]) = {
+  private[this] def updateBreakouts(isFront: Boolean) = {
+    def updateABreakout(breakout: SkDt, actMap: Map[Long, Int], isFront: Boolean) = {
       val p = breakout.paddle
       val b = breakout.ball
       val keyCode = actMap.get(breakout.id)
@@ -214,7 +215,7 @@ trait Grid {
     val temp = breakouts
     temp.foreach {
       t =>
-        breakouts = breakouts.updated(t._1, updateABreakout(t._2, acts))
+        breakouts = breakouts.updated(t._1, updateABreakout(t._2, acts, isFront))
     }
 
     val act = actionMap.getOrElse(frameCount + 1, Map.empty[Long, Int])
@@ -225,13 +226,21 @@ trait Grid {
         }
     }
 
-    val tempBs = breakouts
-    tempBs.foreach {
-      b =>
-        if(b._2.score.lv == Level.OVER) {
-          breakouts -= b._1
-          breakouts += b._1 -> initScene(b._2.id, b._2.name)
-        }
+    if(!isFront) {
+      val tempBs = breakouts
+      tempBs.foreach {
+        b =>
+          if (b._2.score.lv == Level.OVER) {
+            breakouts -= b._1
+            breakouts += b._1 -> initScene(b._2.id, b._2.name)
+          }
+          if (b._2.blocks.isEmpty) {
+            if (b._2.score.lv == Level.LEVELTHREE)
+              winner = b._1
+            breakouts -= b._1
+            breakouts += b._1 -> initScene(b._2.id, b._2.name, if (b._2.score.lv != Level.LEVELTHREE) b._2.score.lv + 1 else Level.DEFAULT)
+          }
+      }
     }
   }
 

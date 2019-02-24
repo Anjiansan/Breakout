@@ -23,14 +23,14 @@ package object Breakout {
     def moveLeft () = {
       x += -20
       if (this.x <= 0) {
-        x = 0
+        x = 1
       }
     }
 
     def moveRight () = {
       x += 20
       if(this.x >= 1000 - PaddleSize.w) {
-        x = 1000 - PaddleSize.w
+        x = 999 - PaddleSize.w
       }
     }
 

@@ -88,7 +88,7 @@ object PlayGround {
         case Sync =>
           tickCount += 1
           grid.update()
-          if (tickCount % 20 == 5) {
+          if (tickCount % 10 == 5) {
             val gridData = grid.getGridData
             dispatch(gridData)
           }

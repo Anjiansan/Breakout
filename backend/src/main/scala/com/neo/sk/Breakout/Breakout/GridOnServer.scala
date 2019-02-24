@@ -31,7 +31,7 @@ class GridOnServer(override val boundary: Point) extends Grid {
     waitingJoin = Map.empty[Long, String]
   }
 
-  override def update(): Unit = {
+  override def update(isFront: Boolean = false): Unit = {
     super.update()
 //    genWaitingSnake()
   }

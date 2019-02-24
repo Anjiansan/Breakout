@@ -71,6 +71,7 @@ object NetGameHolder {
 
   @JSExport
   def run(): Unit = {
+    isPlay = false
     canvas.width = canvasBoundary.x.toInt
     canvas.height = canvasBoundary.y.toInt
     drawGameOn()
@@ -110,6 +111,15 @@ object NetGameHolder {
 //    offCtx.drawImage(background,0,0,Boundary.w.toInt,bounds.y.toInt)
   }
 
+  def drawWin(): Unit = {
+    ctx.fillStyle = Color.Black.toString()
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = Color.Red.toString()
+    ctx.font = "36px Helvetica"
+    ctx.fillText("Game Over.", 150, 180)
+//    offCtx.drawImage(background,0,0,Boundary.w.toInt,bounds.y.toInt)
+  }
+
   def drawGameOff(): Unit = {
     if (!firstCome) {
       ctx.fillStyle = Color.Black.toString()
@@ -122,24 +132,31 @@ object NetGameHolder {
 
 
   def gameLoop(): Unit = {
-    if (wsSetup) {
+    if (wsSetup && isPlay) {
       logicFrameTime = System.currentTimeMillis()
-      if (!justSynced) {
-        update()
-      } else {
-        justSynced = false
-      }
+      update()
+//      if (!justSynced) {
+//        update()
+//      } else {
+//        justSynced = false
+//      }
     }
   }
 
   def update(): Unit = {
-    grid.update()
+    grid.update(true)
   }
 
   def draw(offsetTime: Double): Unit = {
     if (wsSetup) {
-      val data = grid.getGridData
-      drawGrid(myId, data, offsetTime)
+      if(grid.winner == myId) {
+        drawWin()
+        isPlay = false
+      }
+      else {
+        val data = grid.getGridData
+        drawGrid(myId, data, offsetTime)
+      }
     } else {
       drawGameOff()
     }
@@ -156,10 +173,9 @@ object NetGameHolder {
           ctx.drawImage(paddle, breakout.paddle.x + breakout.paddle.speed * offsetTime / Protocol.frameRate, breakout.paddle.y, PaddleSize.w, PaddleSize.h)
           if(!grid.checkRush(myId, offsetTime)) {
             ctx.drawImage(ball, breakout.ball.x - breakout.ball.speedX * offsetTime / Protocol.frameRate, breakout.ball.y - breakout.ball.speedY * offsetTime / Protocol.frameRate, BallSize.w, BallSize.h)
-//            println(offsetTime + " " + lastBX + " " + lastBY + " "  + (breakout.ball.speedX * offsetTime / Protocol.frameRate) + " " + (breakout.ball.speedY * offsetTime / Protocol.frameRate))
+            println(offsetTime + " " + (breakout.ball.x - breakout.ball.speedX * offsetTime / Protocol.frameRate) + " " + (breakout.ball.y - breakout.ball.speedY * offsetTime / Protocol.frameRate))
             lastBX = breakout.ball.x - breakout.ball.speedX * offsetTime / Protocol.frameRate
             lastBY = breakout.ball.y - breakout.ball.speedY * offsetTime / Protocol.frameRate
-            println(lastBX)
           }
           else {
             ctx.drawImage(ball, lastBX, lastBY, BallSize.w, BallSize.h)
@@ -238,11 +254,14 @@ object NetGameHolder {
           grid.addActionWithFrame(id, keyCode, frame)
 
         case data: Protocol.GridDataSync =>
+          if(data.breakouts.nonEmpty && grid.breakouts.nonEmpty)
+            println("=========" + grid.frameCount + " " + grid.breakouts.head._2.ball.y + " " + data.frameCount + " " + data.breakouts.head.ball.y)
           grid.actionMap = grid.actionMap.filterKeys(_ > data.frameCount)
           grid.frameCount = data.frameCount
           grid.breakouts.empty
           grid.breakouts ++= data.breakouts.map(s => s.id -> s)
           justSynced = true
+          logicFrameTime = System.currentTimeMillis()
         //drawGrid(msgData.uid, data)
         case Protocol.NetDelayTest(createTime) =>
           val receiveTime = System.currentTimeMillis()
