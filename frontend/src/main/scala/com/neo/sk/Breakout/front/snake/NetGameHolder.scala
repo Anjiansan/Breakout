@@ -45,6 +45,7 @@ object NetGameHolder {
   var lastBY2 = 0D
 
   var model = 0
+  var winner = "noWinner"
 
   val watchKeys = Set(
     KeyCode.Space,
@@ -151,12 +152,27 @@ object NetGameHolder {
   }
 
   def drawWin(): Unit = {
-    ctx.fillStyle = Color.Black.toString()
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.fillStyle = Color.Red.toString()
-    ctx.font = "36px Helvetica"
-    ctx.fillText("Game Over.", 150, 180)
-//    offCtx.drawImage(background,0,0,Boundary.w.toInt,bounds.y.toInt)
+    if(grid.model == 1) {
+      ctx.fillStyle = Color.Black.toString()
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.fillStyle = Color.Red.toString()
+      ctx.font = "36px Helvetica"
+      ctx.fillText("Game Over.", 150, 180)
+      //    offCtx.drawImage(background,0,0,Boundary.w.toInt,bounds.y.toInt)
+    }
+    else {
+      ctx1.fillStyle = Color.Black.toString()
+      ctx1.fillRect(0, 0, canvas1.width, canvas1.height)
+      ctx1.fillStyle = Color.Red.toString()
+      ctx1.font = "36px Helvetica"
+      ctx1.fillText(s"$winner Win", 150, 180)
+
+      ctx2.fillStyle = Color.Black.toString()
+      ctx2.fillRect(0, 0, canvas2.width, canvas2.height)
+      ctx2.fillStyle = Color.Red.toString()
+      ctx2.font = "36px Helvetica"
+      ctx2.fillText(s"$winner Win", 150, 180)
+    }
   }
 
   def drawGameOff(): Unit = {
@@ -203,7 +219,7 @@ object NetGameHolder {
 
   def draw(offsetTime: Double): Unit = {
     if (wsSetup) {
-      if(grid.winner == myId) {
+      if(grid.winner == myId || (grid.model == 2 && winner != "noWinner")) {
         drawWin()
         isPlay = false
       }
@@ -396,6 +412,9 @@ object NetGameHolder {
             isPlay = true
             logicFrameTime = System.currentTimeMillis()
           }
+
+        case a@Protocol.Winner(id, name) =>
+          winner = name
 
         case a@Protocol.BreakoutAction(id, keyCode, frame) =>
           grid.addActionWithFrame(id, keyCode, frame)

@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import akka.actor.{Actor, ActorRef, ActorSystem, Props, Terminated}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source}
-import com.neo.sk.Breakout.Breakout.Protocol.Play
+import com.neo.sk.Breakout.Breakout.Protocol.{Play, Winner}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext
@@ -129,6 +129,9 @@ object PlayGround {
               if (tickCount % 10 == 5) {
                 val gridData = g._2.getGridData
                 dispatch(g._1, gridData)
+              }
+              if(g._2.model == 2 &&  g._2.deadCount > 1) {
+                dispatch(g._1, Winner(g._2.maxScore, userMap(g._2.maxScore)._1))
               }
           }
 

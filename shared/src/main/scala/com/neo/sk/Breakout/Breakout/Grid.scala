@@ -29,6 +29,8 @@ trait Grid {
   var actionMap = Map.empty[Long, Map[Long, Int]]
 
   var winner = -1l
+  var maxScore = 0l
+  var deadCount = 0
 
   def removeBreakout(id: Long): Option[SkDt] = {
     val r = breakouts.get(id)
@@ -228,6 +230,7 @@ trait Grid {
         }
     }
 
+    maxScore = breakouts.map(b => (b._1, b._2.score.allScore)).toList.maxBy(_._2)._1
     if(!isFront) {
       val tempBs = breakouts
       tempBs.foreach {
@@ -235,12 +238,17 @@ trait Grid {
           if (b._2.score.lv == Level.OVER) {
             breakouts -= b._1
             breakouts += b._1 -> initScene(b._2.id, b._2.name)
+            if(model == 2)
+              deadCount += 1
           }
           if (b._2.blocks.isEmpty) {
             if (b._2.score.lv == Level.LEVELTHREE)
               winner = b._1
             breakouts -= b._1
             breakouts += b._1 -> initScene(b._2.id, b._2.name, if (b._2.score.lv != Level.LEVELTHREE) b._2.score.lv + 1 else Level.DEFAULT)
+            if(model == 2) {
+              deadCount = 3
+            }
           }
       }
     }

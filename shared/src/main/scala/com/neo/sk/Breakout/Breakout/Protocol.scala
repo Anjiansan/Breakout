@@ -28,6 +28,8 @@ object Protocol {
 
   case class NetDelayTest(createTime: Long) extends GameMessage
 
+  case class Winner(winner: Long, name: String) extends GameMessage
+
   val frameRate = 90
 
 }
