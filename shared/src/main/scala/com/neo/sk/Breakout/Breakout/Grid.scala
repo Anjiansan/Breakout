@@ -64,7 +64,7 @@ trait Grid {
     val paddle = if(model ==1) Paddle(449, 450) else Paddle(199, 550)
     val ball = if(model ==1) Ball(491, 432) else Ball(241, 532)
     val data = initBlock(lv)
-    SkDt(id, name, paddle, ball, data._1, Score(data._2))
+    SkDt(id, name, paddle, ball, data._1, Score(data._2, lv=lv))
   }
 
   def initBlock(lv: Int = Level.DEFAULT) = {
@@ -230,7 +230,8 @@ trait Grid {
         }
     }
 
-    maxScore = breakouts.map(b => (b._1, b._2.score.allScore)).toList.maxBy(_._2)._1
+    if(breakouts.nonEmpty)
+      maxScore = breakouts.map(b => (b._1, b._2.score.allScore)).toList.maxBy(_._2)._1
     if(!isFront) {
       val tempBs = breakouts
       tempBs.foreach {

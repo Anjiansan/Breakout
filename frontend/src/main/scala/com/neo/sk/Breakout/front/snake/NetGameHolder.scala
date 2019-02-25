@@ -27,7 +27,7 @@ object NetGameHolder {
   val textLineHeight = 14
 
   var currentRank = List.empty[Score]
-  var myId = -1l
+  var myId = -2l
 
   var grid: GridOnClient = null
 
@@ -219,7 +219,7 @@ object NetGameHolder {
 
   def draw(offsetTime: Double): Unit = {
     if (wsSetup) {
-      if(grid.winner == myId || (grid.model == 2 && winner != "noWinner")) {
+      if(grid.winner == myId || winner != "noWinner") {
         drawWin()
         isPlay = false
       }

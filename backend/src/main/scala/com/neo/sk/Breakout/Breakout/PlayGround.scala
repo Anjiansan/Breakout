@@ -133,6 +133,9 @@ object PlayGround {
               if(g._2.model == 2 &&  g._2.deadCount > 1) {
                 dispatch(g._1, Winner(g._2.maxScore, userMap(g._2.maxScore)._1))
               }
+              if(g._2.model == 1 && g._2.winner != -1l) {
+                dispatch(g._1, Winner(g._2.winner, userMap(g._2.winner)._1))
+              }
           }
 
         case NetTest(id, createTime) =>
