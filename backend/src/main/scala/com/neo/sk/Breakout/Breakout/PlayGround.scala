@@ -92,6 +92,8 @@ object PlayGround {
         case r@Left(id, name) =>
           log.info(s"got $r")
           val roomId = userMap(id)._2
+          if(dRooms.contains(roomId))
+            dRooms -= roomId
           subscribers(roomId).foreach(i => if(i._1 == id) context.unwatch(i._2))
           subscribers.update(roomId, subscribers(roomId).filter(_._1 != id))
           grid(roomId).removeBreakout(id)
@@ -114,12 +116,14 @@ object PlayGround {
 
         case r@Terminated(actor) =>
           log.warn(s"got $r")
-//          val roomId = subscribers.filter(_.)
-//          subscribers.find(_._2.equals(actor)).foreach { case (id, _) =>
-//            log.debug(s"got Terminated id = $id")
-//            subscribers -= id
-//            grid(roomId).removeBreakout(id).foreach(s => dispatch(roomId, Protocol.BreakoutLeft(id, s.name)))
-//          }
+          val roomId = subscribers.filter(_._2.exists(_._2.equals(actor))).head._1
+          if(dRooms.contains(roomId))
+            dRooms -= roomId
+          subscribers(roomId).find(_._2.equals(actor)).foreach { case (id, _) =>
+            log.debug(s"got Terminated id = $id")
+            subscribers -= roomId
+            grid(roomId).removeBreakout(id).foreach(s => dispatch(roomId, Protocol.BreakoutLeft(id, s.name)))
+          }
 
         case Sync =>
           tickCount += 1

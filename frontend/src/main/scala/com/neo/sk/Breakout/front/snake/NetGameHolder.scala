@@ -411,7 +411,11 @@ object NetGameHolder {
       wsMsg match {
         case Protocol.Id(id) => myId = id
         case Protocol.TextMsg(message) => writeToArea(s"MESSAGE: $message")
-        case Protocol.BreakoutLeft(id, user) => writeToArea(s"$user left!")
+        case Protocol.BreakoutLeft(id, user) =>
+          if(grid.model == 2) {
+            dom.window.location.href = "/breakout/netSnake"
+          }
+
         case Protocol.Play(id) =>
           if(id == myId)
           {
