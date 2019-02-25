@@ -64,6 +64,7 @@ object NetGameHolder {
   private[this] lazy val nameField = dom.document.getElementById("name").asInstanceOf[HTMLInputElement]
   private[this] lazy val singleButton = dom.document.getElementById("single").asInstanceOf[HTMLButtonElement]
   private[this] lazy val doubleButton = dom.document.getElementById("double").asInstanceOf[HTMLButtonElement]
+  private[this] lazy val againButton = dom.document.getElementById("again").asInstanceOf[HTMLButtonElement]
   private[this] lazy val canvas = dom.document.getElementById("GameView").asInstanceOf[Canvas]
   private[this] lazy val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
   private[this] lazy val canvas1 = dom.document.getElementById("GameView1").asInstanceOf[Canvas]
@@ -161,6 +162,11 @@ object NetGameHolder {
       //    offCtx.drawImage(background,0,0,Boundary.w.toInt,bounds.y.toInt)
     }
     else {
+      againButton.style += "display: inline-block;"
+      againButton.onclick = { (event: MouseEvent) =>
+        dom.window.location.href = "/breakout/netSnake"
+        event.preventDefault()
+      }
       ctx1.fillStyle = Color.Black.toString()
       ctx1.fillRect(0, 0, canvas1.width, canvas1.height)
       ctx1.fillStyle = Color.Red.toString()
