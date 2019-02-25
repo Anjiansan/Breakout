@@ -38,6 +38,8 @@ trait SnakeService {
 
   private[this] val log = LoggerFactory.getLogger(this.getClass)
 
+  val users = scala.collection.mutable.ListBuffer.empty[Long]
+
 
   val netSnakeRoute = {
     (pathPrefix("netSnake") & get) {

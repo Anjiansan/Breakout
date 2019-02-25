@@ -254,8 +254,8 @@ object NetGameHolder {
           grid.addActionWithFrame(id, keyCode, frame)
 
         case data: Protocol.GridDataSync =>
-          if(data.breakouts.nonEmpty && grid.breakouts.nonEmpty)
-            println("=========" + grid.frameCount + " " + grid.breakouts.head._2.ball.y + " " + data.frameCount + " " + data.breakouts.head.ball.y)
+//          if(data.breakouts.nonEmpty && grid.breakouts.nonEmpty)
+//            println("=========" + grid.frameCount + " " + grid.breakouts.head._2.ball.y + " " + data.frameCount + " " + data.breakouts.head.ball.y)
           grid.actionMap = grid.actionMap.filterKeys(_ > data.frameCount)
           grid.frameCount = data.frameCount
           grid.breakouts.empty

@@ -144,7 +144,7 @@ trait Grid {
           allValue += 1
         }
         else {
-          blocks.append(Block(item._1, item._2, 1))
+          blocks.append(Block(item._1, item._2, 2))
           allValue += 2
         }
     }
