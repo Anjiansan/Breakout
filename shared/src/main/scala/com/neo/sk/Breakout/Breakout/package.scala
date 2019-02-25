@@ -20,17 +20,24 @@ package object Breakout {
                      var isLeftMove: Boolean = true,                  // 能否左移
                      var isRightMove: Boolean = true                  // 能否右移
                    ) {
-    def moveLeft () = {
+    def moveLeft(model: Int) = {
       x += -20
       if (this.x <= 0) {
         x = 1
       }
     }
 
-    def moveRight () = {
+    def moveRight(model: Int) = {
       x += 20
-      if(this.x >= 1000 - PaddleSize.w) {
-        x = 999 - PaddleSize.w
+      if(model == 1) {
+        if (this.x >= 1000 - PaddleSize.w) {
+          x = 999 - PaddleSize.w
+        }
+      }
+      else {
+        if (this.x >= Boundary1.w - PaddleSize.w) {
+          x = 499 - PaddleSize.w
+        }
       }
     }
 
@@ -73,16 +80,18 @@ package object Breakout {
                    var speedY: Int = 0,                             // y轴速度
                    var fired: Boolean = false                       // 是否运动，默认静止不动
                  ) {
-    def move(s: Score) = {
+    def move(s: Score, model: Int) = {
+      val bx = if(model == 1) Boundary.w else Boundary1.w
+      val by = if(model == 1) Boundary.h else Boundary1.h
       if (this.fired) {
         // 碰撞边界检测
-        if (this.x <= 0 || this.x >= 1000 - BallSize.w) {
+        if (this.x <= 0 || this.x >= bx - BallSize.w) {
           this.speedX *= -1
         }
         if (this.y <= 0) {
           this.speedY *= -1
         }
-        if (this.y >= 500 - BallSize.h) {
+        if (this.y >= by - BallSize.h) {
           // 游戏结束
           s.lv = Level.OVER
         }
@@ -198,6 +207,11 @@ package object Breakout {
   object Boundary{
     val w = 1000
     val h = 500
+  }
+
+  object Boundary1{
+    val w = 500
+    val h = 600
   }
 
   object Level {

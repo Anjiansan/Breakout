@@ -38,8 +38,6 @@ trait SnakeService {
 
   private[this] val log = LoggerFactory.getLogger(this.getClass)
 
-  val users = scala.collection.mutable.ListBuffer.empty[Long]
-
 
   val netSnakeRoute = {
     (pathPrefix("netSnake") & get) {
@@ -47,15 +45,15 @@ trait SnakeService {
         getFromResource("html/netSnake.html")
       } ~
       path("join") {
-        parameter('name) { name =>
-          handleWebSocketMessages(webSocketSnakeFlow(sender = name))
+        parameters('name.as[String], 'type.as[Int]) { (name, t) =>
+          handleWebSocketMessages(webSocketSnakeFlow(sender = name, t))
         }
       }
     }
   }
 
 
-  def webSocketSnakeFlow(sender: String): Flow[Message, Message, Any] =
+  def webSocketSnakeFlow(sender: String, t: Int): Flow[Message, Message, Any] =
     Flow[Message]
       .collect {
         case TextMessage.Strict(msg) =>
@@ -66,7 +64,7 @@ trait SnakeService {
         // unlikely because chat messages are small) but absolutely possible
         // FIXME: We need to handle TextMessage.Streamed as well.
       }
-      .via(playGround.joinGame(idGenerator.getAndIncrement().toLong, sender)) // ... and route them through the chatFlow ...
+      .via(playGround.joinGame(idGenerator.getAndIncrement().toLong, sender, t)) // ... and route them through the chatFlow ...
       .map { msg => TextMessage.Strict(msg.asJson.noSpaces) // ... pack outgoing messages into WS JSON messages ...
       //.map { msg => TextMessage.Strict(write(msg)) // ... pack outgoing messages into WS JSON messages ...
     }.withAttributes(ActorAttributes.supervisionStrategy(decider))    // ... then log any processing errors on stdin

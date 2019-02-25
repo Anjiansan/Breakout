@@ -7,7 +7,7 @@ import com.neo.sk.Breakout.Breakout.{Grid, Point}
   * Date: 9/3/2016
   * Time: 10:13 PM
   */
-class GridOnClient(override val boundary: Point) extends Grid {
+class GridOnClient(override var boundary: Point, override var model: Int) extends Grid {
 
   override def debug(msg: String): Unit = println(msg)
 

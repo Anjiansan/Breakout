@@ -1,6 +1,7 @@
 package com.neo.sk.Breakout.Breakout
 
 import java.awt.event.KeyEvent
+import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props, Terminated}
 import akka.stream.OverflowStrategy
@@ -21,7 +22,7 @@ import scala.language.postfixOps
 trait PlayGround {
 
 
-  def joinGame(id: Long, name: String): Flow[String, Protocol.GameMessage, Any]
+  def joinGame(id: Long, name: String, t: Int): Flow[String, Protocol.GameMessage, Any]
 
   def syncData()
 
@@ -30,83 +31,122 @@ trait PlayGround {
 
 object PlayGround {
 
-  val bounds = Point(Boundary.w, Boundary.h)
-
   val log = LoggerFactory.getLogger(this.getClass)
+
+  val users = scala.collection.mutable.ListBuffer.empty[Long]
+
+  private val idGenerator = new AtomicInteger(1000)
 
 
   def create(system: ActorSystem)(implicit executor: ExecutionContext): PlayGround = {
 
     val ground = system.actorOf(Props(new Actor {
-      var subscribers = Map.empty[Long, ActorRef]
+      var subscribers = scala.collection.mutable.Map.empty[Long, List[(Long, ActorRef)]]
 
-      var userMap = Map.empty[Long, String]
+      var userMap = Map.empty[Long, (String, Long)]
 
-      val grid = new GridOnServer(bounds)
+      val grid = scala.collection.mutable.Map.empty[Long, GridOnServer]
+
+      val dRooms = scala.collection.mutable.ListBuffer.empty[Long]
 
       var tickCount = 0l
 
       override def receive: Receive = {
-        case r@Join(id, name, subscriber) =>
+        case r@Join(id, name, subscriber, t) =>
           log.info(s"got $r")
-          userMap += (id -> name)
-          context.watch(subscriber)
-          subscribers += (id -> subscriber)
-          grid.addBreakout(id, name)
-          dispatchTo(id, Protocol.Id(id))
-          dispatch(grid.getGridData)
+          if(t == 1 || dRooms.isEmpty) {
+            val roomId = idGenerator.getAndIncrement().toLong
+            userMap += (id -> (name, roomId))
+            context.watch(subscriber)
+            subscribers += (roomId -> List((id, subscriber)))
+            if(t == 1) {
+              grid += (roomId -> new GridOnServer(Point(Boundary.w, Boundary.h), 1))
+            }
+            else {
+              dRooms += roomId
+              grid += (roomId -> new GridOnServer(Point(Boundary1.w, Boundary1.h), 2))
+            }
+            grid(roomId).addBreakout(id, name)
+            dispatchTo(roomId, id, Protocol.Id(id))
+            dispatch(roomId, grid(roomId).getGridData)
+          }
+          else {
+            val roomId = dRooms.head
+            dRooms -= roomId
+            userMap += (id -> (name, roomId))
+            context.watch(subscriber)
+            subscribers.update(roomId, subscribers(roomId) :+ (id, subscriber))
+            grid(roomId).addBreakout(id, name)
+            dispatchTo(roomId, id, Protocol.Id(id))
+            grid(roomId).breakouts.foreach {
+              b =>
+                val skDt = b._2
+                skDt.ball.fired = true
+                skDt.ball.speedX = 2
+                skDt.ball.speedY = 15
+            }
+            dispatch(roomId, grid(roomId).getGridData)
+            grid(roomId).breakouts.foreach(b => dispatchTo(roomId, b._1, Play(b._1)))
+          }
 
         case r@Left(id, name) =>
           log.info(s"got $r")
-          subscribers.get(id).foreach(context.unwatch)
-          subscribers -= id
-          grid.removeBreakout(id)
-          dispatch(Protocol.BreakoutLeft(id, name))
+          val roomId = userMap(id)._2
+          subscribers(roomId).foreach(i => if(i._1 == id) context.unwatch(i._2))
+          subscribers.update(roomId, subscribers(roomId).filter(_._1 != id))
+          grid(roomId).removeBreakout(id)
+          dispatch(roomId, Protocol.BreakoutLeft(id, name))
 
         case r@Key(id, keyCode, frame) =>
           log.debug(s"got $r")
-          val skDt = grid.breakouts.filter(_._1 == id).head._2
-          if (keyCode == KeyEvent.VK_SPACE) {
+          val roomId = userMap(id)._2
+          val skDt = grid(roomId).breakouts.filter(_._1 == id).head._2
+          if (keyCode == KeyEvent.VK_SPACE && !dRooms.contains(roomId) && grid(roomId).breakouts.size == 1) {
             skDt.ball.fired = true
             skDt.ball.speedX = 2
             skDt.ball.speedY = 15
-            dispatch(grid.getGridData)
-            dispatchTo(id, Play(id))
+            dispatch(roomId, grid(roomId).getGridData)
+            dispatchTo(roomId, id, Play(id))
           } else if(skDt.ball.fired) {
-            grid.addActionWithFrame(id, keyCode, frame)
-            dispatch(Protocol.BreakoutAction(id, keyCode, frame))
+            grid(roomId).addActionWithFrame(id, keyCode, frame)
+            dispatch(roomId, Protocol.BreakoutAction(id, keyCode, frame))
           }
 
         case r@Terminated(actor) =>
           log.warn(s"got $r")
-          subscribers.find(_._2.equals(actor)).foreach { case (id, _) =>
-            log.debug(s"got Terminated id = $id")
-            subscribers -= id
-            grid.removeBreakout(id).foreach(s => dispatch(Protocol.BreakoutLeft(id, s.name)))
-          }
+//          val roomId = subscribers.filter(_.)
+//          subscribers.find(_._2.equals(actor)).foreach { case (id, _) =>
+//            log.debug(s"got Terminated id = $id")
+//            subscribers -= id
+//            grid(roomId).removeBreakout(id).foreach(s => dispatch(roomId, Protocol.BreakoutLeft(id, s.name)))
+//          }
 
         case Sync =>
           tickCount += 1
-          grid.update()
-          if (tickCount % 10 == 5) {
-            val gridData = grid.getGridData
-            dispatch(gridData)
+          grid.foreach {
+            g =>
+              g._2.update()
+              if (tickCount % 10 == 5) {
+                val gridData = g._2.getGridData
+                dispatch(g._1, gridData)
+              }
           }
 
         case NetTest(id, createTime) =>
           log.info(s"Net Test: createTime=$createTime")
-          dispatchTo(id, Protocol.NetDelayTest(createTime))
+          val roomId = userMap(id)._2
+          dispatchTo(roomId, id, Protocol.NetDelayTest(createTime))
 
         case x =>
           log.warn(s"got unknown msg: $x")
       }
 
-      def dispatchTo(id: Long, gameOutPut: Protocol.GameMessage): Unit = {
-        subscribers.get(id).foreach { ref => ref ! gameOutPut }
+      def dispatchTo(rId: Long, id: Long, gameOutPut: Protocol.GameMessage): Unit = {
+        subscribers(rId).foreach { ref => if(id == ref._1) ref._2 ! gameOutPut }
       }
 
-      def dispatch(gameOutPut: Protocol.GameMessage) = {
-        subscribers.foreach { case (_, ref) => ref ! gameOutPut }
+      def dispatch(rId: Long, gameOutPut: Protocol.GameMessage) = {
+        subscribers(rId).foreach { case (_, ref) => ref ! gameOutPut }
       }
 
 
@@ -121,7 +161,7 @@ object PlayGround {
 
 
     new PlayGround {
-      override def joinGame(id: Long, name: String): Flow[String, Protocol.GameMessage, Any] = {
+      override def joinGame(id: Long, name: String, t: Int): Flow[String, Protocol.GameMessage, Any] = {
         val in =
           Flow[String]
             .map { s =>
@@ -136,7 +176,7 @@ object PlayGround {
 
         val out =
           Source.actorRef[Protocol.GameMessage](3, OverflowStrategy.dropHead)
-            .mapMaterializedValue(outActor => ground ! Join(id, name, outActor))
+            .mapMaterializedValue(outActor => ground ! Join(id, name, outActor, t))
 
         Flow.fromSinkAndSource(in, out)
       }
@@ -149,7 +189,7 @@ object PlayGround {
 
   private sealed trait UserAction
 
-  private case class Join(id: Long, name: String, subscriber: ActorRef) extends UserAction
+  private case class Join(id: Long, name: String, subscriber: ActorRef, t: Int) extends UserAction
 
   private case class Left(id: Long, name: String) extends UserAction
 

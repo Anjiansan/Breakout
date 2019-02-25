@@ -12,7 +12,9 @@ import scala.util.Random
   */
 trait Grid {
 
-  val boundary: Point
+  var boundary: Point
+
+  var model:Int
 
   def debug(msg: String): Unit
 
@@ -57,8 +59,8 @@ trait Grid {
   }
 
   def initScene(id: Long, name: String, lv: Int = Level.DEFAULT) = {
-    val paddle = Paddle(449, 450)
-    val ball = Ball(491, 432)
+    val paddle = if(model ==1) Paddle(449, 450) else Paddle(199, 550)
+    val ball = if(model ==1) Ball(491, 432) else Ball(241, 532)
     val data = initBlock(lv)
     SkDt(id, name, paddle, ball, data._1, Score(data._2))
   }
@@ -69,7 +71,7 @@ trait Grid {
     val c_w = boundary.x              // canvas宽度
     val c_h = boundary.y             // canvas高度
     val xNum_max = c_w/50                    // x轴砖块最大数量
-    val yNum_max = 12                        // y轴砖块最大数量
+    val yNum_max = 6                       // y轴砖块最大数量
     var x_start = 0D                        // x轴起始坐标，根据砖块数量浮动
     var y_start = 60D                          // y轴起始坐标，默认从60起
 
@@ -77,8 +79,8 @@ trait Grid {
 
     lv match {
       case 1 => // 正三角形
-        var xNum = 16                               // x轴砖块第一层数量
-        var yNum = 9                                 // y轴砖块层数
+        var xNum = if(model == 1) 16 else 8                               // x轴砖块第一层数量
+        var yNum = if(model == 1) 9 else 5                                 // y轴砖块层数
         // 循环y轴
         for(i <- 0 until yNum){
           // 修改每层x轴砖块数量
@@ -158,8 +160,8 @@ trait Grid {
       val b = breakout.ball
       val keyCode = actMap.get(breakout.id)
       keyCode match {
-        case Some(KeyEvent.VK_LEFT) => p.moveLeft()
-        case Some(KeyEvent.VK_RIGHT) => p.moveRight()
+        case Some(KeyEvent.VK_LEFT) => p.moveLeft(model)
+        case Some(KeyEvent.VK_RIGHT) => p.moveRight(model)
         case _ =>
       }
       // 小球碰撞挡板检测
@@ -207,7 +209,7 @@ trait Grid {
         p.isRightMove = true
       }
       // 移动小球
-      b.move(breakout.score)
+      b.move(breakout.score, model)
       breakout.copy(blocks = breakout.blocks.filter(_.alive))
     }
 

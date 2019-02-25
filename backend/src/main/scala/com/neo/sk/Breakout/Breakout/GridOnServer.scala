@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
   * Date: 9/3/2016
   * Time: 9:55 PM
   */
-class GridOnServer(override val boundary: Point) extends Grid {
+class GridOnServer(override var boundary: Point, override var model: Int) extends Grid {
 
 
   private[this] val log = LoggerFactory.getLogger(this.getClass)
